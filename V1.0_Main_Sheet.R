@@ -38,14 +38,14 @@ message("Number of ACTIVE Skus on MainSheet:", length(UnDeletedSKU))
 ###Mainsheet Processing
 #Pull out any non-discontinued skus for Part type
 MS_PTlabel <- subset(PulledMain, PulledMain$type=="simple" & PulledMain$part_type_filter!="" & PulledMain$delete == "N", select=c(sku, part_type_filter))
-names(MS_PTlabel) = c("sku", "label")
+names(MS_PTlabel) = c("Numb_Sku", "Pro_Label")
 
 #Pull out any non-discontinued skus for Series
 MS_Serieslabel <- subset(PulledMain, PulledMain$type=="simple" & PulledMain$part_type_filter!="" & PulledMain$delete == "N", select=c(sku, series_parent))
-names(MS_Serieslabel) = c("sku", "label")
-
+names(MS_Serieslabel) = c("Numb_Sku", "Pro_Label")
 
 message("MainSheet Created")
+
 
 ###########################################################
 ###########################################################

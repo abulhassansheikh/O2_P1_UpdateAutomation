@@ -33,9 +33,9 @@ for(i in 2:ncol(jobber)){	if(class(jobber[,i])== "integer"){numCols = c(numCols,
 jobber = jobber[,!(names(jobber) %in% numCols )]
 
 #Combin all text columns
-for(i in 2:ncol(jobber)){jobber$string = paste(jobber$string,  trimws(jobber[,i]), sep=" ", collapse=NULL)}#jobber$sku,
-string_jobber = subset(jobber, select=c(sku, string))
-
+for(i in 2:ncol(jobber)){jobber$Pro_String= paste(jobber$Pro_String,  trimws(jobber[,i]), sep=" ", collapse=NULL)}#jobber$sku,
+string_jobber = subset(jobber, select=c(sku, Pro_String))
+names(string_jobber) = c("Numb_Sku", "Pro_String")
 
 message("Formatted Jobber Loaded")
 

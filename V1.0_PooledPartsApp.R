@@ -12,18 +12,20 @@ REF.Conversion,
 #Find and extract Parts app and merge it with Update.PostIF.Merge
 message("--------------------------*Pooled Parts App *")
 
+#Find the latest file within the specific DCI folder
+##Change the directory to temp folder incase any files are outputted
+setwd("//192.168.2.32/Group/Data Team/Brand_Update_Location/13. FILE_DUMP")
+
+
+if(DCIFolderList != "DUMB"){
 
 #Create empty Data frame to collect the multiple DCI folder data
 PooledPartsApp = data.frame()
 
-
-#Find the latest file within the specific DCI folder
-##Change the directory to temp folder incase any files are outputted
-setwd("//192.168.2.32/Group/Data Team/Brand_Update_Location/13. FILE_DUMP")
-	
 ##Create DCI Folder Path
 DCIPath = paste("//192.168.2.32/GoogleDrive/FTP_Downloads/DCI_Files/",as.character(DCIFolderList), sep = "", collapse = NULL)
 message("DCI path for brand is: ", DCIPath)
+
 
 ##Identify the Latest DCI file
 LatestDCIFile = sort(list.files(DCIPath , pattern = "*.zip"),decreasing = TRUE)[1]
@@ -33,6 +35,7 @@ message("Latest DCI File is: ", LatestDCIFile )
 LatestDCILocation = paste(as.character(DCIPath) ,as.character(LatestDCIFile), sep = "/", collapse = NULL)
 message("Path of Latest DCI File is: ", LatestDCILocation )
 
+if(DCIFolderList != "DUMB"){
 
 #Find, upzip, remove duplicates and rbind to PooledPartsApp 
 ##find the Parts App file & Load it
@@ -66,10 +69,11 @@ Update.PostConversion.Merge = merge(Update.PostIF.Merge, PooledPartsApp,  by=c("
 
 Update.PostPA.Merge = Update.PostConversion.Merge
 
-
 ###Process Parts app for Prediction
 PooledPartsApp$Pro_String = paste(PooledPartsApp$expldescr, PooledPartsApp$merchname , PooledPartsApp$dciptdescr , sep=" ")
-string_DCI = subset(PooledPartsApp, select = c("Numb_Sku", "Pro_String"))
+string_DCI = subset(PooledPartsApp, select = c("Numb_Sku", "Pro_String")) 
+
+} else {Update.PostPA.Merge  = Update.PostIF.Merge; string_DCI = "FALSE" }
 
 ###########################################################
 ###########################################################

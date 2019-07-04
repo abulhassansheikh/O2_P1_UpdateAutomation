@@ -42,11 +42,15 @@ Update.PostIF.Merge = merge(UpdatedSkuListSimple, PulledIF,  by="Numb_Sku", all 
 
 ###IF Processing
 #Remove number columns from jobber
+if(nrow(PulledIF)>0){
 string_IF <- subset(PulledIF , select = c("Numb_Sku", "product_name"))
 names(string_IF) =c("Numb_Sku", "Pro_String")
+} else {string_IF = "FALSE"}
 
 
 message("Invantory File Created")
+
+
 
 
 ###########################################################
