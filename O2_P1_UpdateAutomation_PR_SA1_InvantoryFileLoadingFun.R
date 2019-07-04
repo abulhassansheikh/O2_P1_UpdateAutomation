@@ -30,7 +30,7 @@ message("Latest Invantory File is: ", IFFile)
 
 #pull Unziped Invantory File and place into InvantoryFile df
 message("Loading Invantory File, this may take some time...")
-InvantoryFile = read.csv(unzip(IFLocation ,IFFile ), header = TRUE, row.names=NULL)
+InvantoryFile = read.csv(unzip(IFLocation ,IFFile ), header = TRUE, row.names=NULL, stringsAsFactors = FALSE)
 
 
 #Remove the "=" from infront of skus
@@ -40,9 +40,15 @@ InvantoryFile$mpn= substring(InvantoryFile$mpn, 2)
 #Place a "#" infront of sku and turn into a character. 
 InvantoryFile$Numb_Sku = paste("#",as.character(InvantoryFile$mpn), sep = "", collapse = NULL)
 
-
+message("--------------------------*Inventory File Extraction Complete*")
 message("Latest InvantoryFile ready to use!")
-
+message("")
+message("***If you have any issues with the output***")
+message("   ***Please Contact Abul Hassan Sheikh***  ")
+message("")
+message("Version: 1.1")
+message("Last Updated: January 23th 2019")
+message("Author: Abul Hassan Sheikh")
 
 #Return the following data sets
 return(InvantoryFile)
@@ -54,8 +60,8 @@ return(InvantoryFile)
 ###########################################################
 #TROUBLESHOOT
 
-InvantoryFile = GetLatestInventoryFile()
-InvantoryFile = data.frame(InvantoryFile)
+#InvantoryFile = GetLatestInventoryFile()
+#InvantoryFile = data.frame(InvantoryFile,  stringsAsFactors =FALSE)
 
 ###########################################################
 #Future Add Ons
