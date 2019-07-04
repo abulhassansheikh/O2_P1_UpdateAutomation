@@ -21,17 +21,17 @@ message("Folders & Files will be named: ", BrandFolderName)
 
 #Load openxlsx package to save excel file with tabs
 library("openxlsx")
-##Create the workbook for excel and add the following tabs: "Requirements", "Internal_Audit", "Iana_Audit"
+##Create the workbook for excel and add the following tabs: "Requirements", "Internal_Audit", "Audit"
 CompiledSheet <- createWorkbook()
 
-addWorksheet(CompiledSheet , "TDOT_Requirements")
-writeData(CompiledSheet , sheet = "Requirements", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/TDot_Requirements_Instructions.csv", header = TRUE, row.names=NULL))
+addWorksheet(CompiledSheet , "New_Audit")
+writeData(CompiledSheet , sheet = "New_Audit", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/New_Audit.csv", header = TRUE, row.names=NULL))
 
 addWorksheet(CompiledSheet , "Internal_Audit")
 writeData(CompiledSheet , sheet = "Internal_Audit", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/Internal_Audit.csv", header = TRUE, row.names=NULL))
 
-addWorksheet(CompiledSheet , "Audit")
-writeData(CompiledSheet , sheet = "Audit", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/Iana_Audit.csv", header = TRUE, row.names=NULL))
+addWorksheet(CompiledSheet , "NS--BRANDNAME.csv")
+writeData(CompiledSheet , sheet = "NS--BRANDNAME.csv", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/Consol_Ref_Sheet.csv", header = TRUE, row.names=NULL))
 
 #Attach PulledMain to Compiled Sheet
 addWorksheet(CompiledSheet , "Old_Main")

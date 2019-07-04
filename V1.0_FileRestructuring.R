@@ -8,20 +8,17 @@
 #' @examples
 #' XXX()
 ###########################################################
-FileRestructure <- function(Update.PostPA.Merge){
-
-message("--------------------------*FileRestructure*")
-
+message("--------------------------*Restructuring File*")
 
 #Subset off revised skus
-FinalUpdateFile = subset(Update.PostPA.Merge, RevisedSku =="Revised")
+FinalUpdateFile = subset(CompletePrediction, RevisedSku =="Revised")
 
 #File Restructure
 JobberDescription <- subset(FinalUpdateFile , select = -c(
 
 sku, price, TotalQty, CaseQty, Weight, Height, Length, Width, product_name, upc, 
 
-expldescr, fnstring, merchname, dciptdescr, part_type_filter, series_parent,Category_Location,
+expldescr, fnstring, merchname, dciptdescr, part_type_filter, PTConfidence, series_parent,SEConfidence,#Category_Location,
 
 Numb_Sku, Internal_Sku, STATUS, RevisedSku, attribute_set,
 
@@ -47,20 +44,16 @@ upc, Jobber_UPC,
 TotalQty, CaseQty, 
 
 #Product Description Data
-dciptdescr, merchname, Category_Location, part_type_filter, series_parent, expldescr, product_name 
-
+part_type_filter, PTConfidence,
+series_parent,SEConfidence,
+dciptdescr, merchname,  expldescr, product_name 
+#part_type_filter, series_parent,Category_Location
 ))
 
 #fnstring
 #Make the final Update File
 CompleteUpdate <- cbind(AllSkuInformation, JobberDescription)
 
-
-
-#Return the following data sets
-return(list(CompleteUpdate))
-
-}
 
 ###########################################################
 ###########################################################

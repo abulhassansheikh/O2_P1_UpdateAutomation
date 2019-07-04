@@ -8,9 +8,7 @@
 #' @examples
 #' UsesIF()
 ###########################################################
-UsesIF <- function(REF.BrandData, UpdatedSkuListSimple, InvantoryFile){
-
-
+#Use the preloaded inventory file
 message("--------------------------*Invantory File*")
 
 
@@ -38,19 +36,17 @@ PulledIF = rbind(PulledIF, IFV3)
 PulledIF <- subset(PulledIF , select = c("Numb_Sku", "price","TotalQty", "CaseQty","Weight","Height",
 			"Length","Width","product_name", "upc"))
 
-
 #Merge the final pulledIF with the simple match
 Update.PostIF.Merge = merge(UpdatedSkuListSimple, PulledIF,  by="Numb_Sku", all = TRUE)
 
 
+###IF Processing
+#Remove number columns from jobber
+string_IF <- subset(PulledIF , select = c("Numb_Sku", "product_name"))
+names(string_IF) =c("Numb_Sku", "Pro_String")
+
+
 message("Invantory File Created")
-
-
-#Return the following data sets
-return(list(PulledIF, Update.PostIF.Merge))
-
-
-}
 
 
 ###########################################################

@@ -9,10 +9,8 @@
 #' pooledPartsApp()
 ###########################################################
 REF.Conversion,
-PartsApp <- function(DCIFolderList, Update.PostIF.Merge ){
-
-
-message("--------------------------**")
+#Find and extract Parts app and merge it with Update.PostIF.Merge
+message("--------------------------*Pooled Parts App *")
 
 
 #Create empty Data frame to collect the multiple DCI folder data
@@ -56,10 +54,10 @@ PooledPartsApp$Duplicate = paste(PooledPartsApp$exppartno,":",PooledPartsApp$exp
 PooledPartsApp = PooledPartsApp[!duplicated(PooledPartsApp$Duplicate),]
 
 ##Trim the PooledPartsApp for necessary information
+#DropDCIcols = c("Duplicate")
+#PooledPartsApp[,!(names(PooledPartsApp) %in% DropDCIcols)]
 PooledPartsApp <- subset(PooledPartsApp, select = c("Numb_Sku", "expldescr","fnstring", "merchname","dciptdescr"))
-
-
-message("Parts App Processed")
+message("Number of Unique Skus on Parts App File: ", nrow(PooledPartsApp))
 
 
 #Merge the PooledPartsApp with Update.PostIF.Merge to create Update.PostPA.Merge
@@ -68,12 +66,10 @@ Update.PostConversion.Merge = merge(Update.PostIF.Merge, PooledPartsApp,  by=c("
 
 Update.PostPA.Merge = Update.PostConversion.Merge
 
-#Return the following data sets
-return(list(PooledPartsApp, LatestDCIFile, LatestDCILocation, Update.PostPA.Merge ))
 
-
-}
-
+###Process Parts app for Prediction
+PooledPartsApp$Pro_String = paste(PooledPartsApp$expldescr, PooledPartsApp$merchname , PooledPartsApp$dciptdescr , sep=" ")
+string_DCI = subset(PooledPartsApp, select = c("Numb_Sku", "Pro_String"))
 
 ###########################################################
 ###########################################################
