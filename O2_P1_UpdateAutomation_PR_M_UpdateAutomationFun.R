@@ -146,13 +146,17 @@ numCols = c("usa_jobber_price", "ca_jobber_price", "Jobber_UPC", "Jobber_Weight"
 jobber = UpdateFile[ , !(names(UpdateFile) %in% numCols )]
 
 #Remove other # columns
+if(is.null(ncol(jobber)) ==FALSE){
 for(i in 2:ncol(jobber)){	if(class(jobber[,i])== "integer"){numCols = c(numCols, names(jobber)[i])}	}
 jobber = jobber[,!(names(jobber) %in% numCols )]
+}
 
 #Combin all text columns
+if(is.null(ncol(jobber)) ==FALSE){
 for(i in 2:ncol(jobber)){jobber$Pro_String= paste(jobber$Pro_String,  trimws(jobber[,i]), sep=" ", collapse=NULL)}#jobber$sku,
 string_jobber = subset(jobber, select=c(sku, Pro_String))
 names(string_jobber) = c("Numb_Sku", "Pro_String")
+} else{string_jobber = "FALSE"}
 
 message("Formatted Jobber Loaded")
 
@@ -374,7 +378,7 @@ Update.PostPA.Merge = Update.PostConversion.Merge
 PooledPartsApp$Pro_String = paste(PooledPartsApp$expldescr, PooledPartsApp$merchname , PooledPartsApp$dciptdescr , sep=" ")
 string_DCI = subset(PooledPartsApp, select = c("Numb_Sku", "Pro_String")) 
 
-} else {Update.PostPA.Merge  = Update.PostIF.Merge; string_DCI = "FALSE" }
+} else {EmptyDCI = data.frame(expldescr= "", fnstring = "", merchname="", dciptdescr=""); Update.PostIF.Merge = cbind(Update.PostIF.Merge,EmptyDCI  ); Update.PostPA.Merge  = Update.PostIF.Merge; string_DCI = "FALSE" }
 
 ###########################################################
 ###########################################################
@@ -570,10 +574,10 @@ message("Image Process Complete")
 ###############################################
 ###############################################
 ###Prediction Logic for PT and Series depending on Avaliable Sources
-if(predictPTS == "1"){
+if(predictPTS == "1" & length(REF.NewSkuList)>1){
 
 #Jobber + DCI + IF
-if(length(string_IF) == 2 & length(string_DCI) == 2){
+if(length(string_IF) == 2 & length(string_DCI) == 2 & length(string_jobber) == 2){
 
 	#Make Prediction df via merging
 	PredictPT_jobber = merge(MS_PTlabel, string_jobber, by = "Numb_Sku", all = TRUE)
@@ -683,13 +687,13 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 		} else if(MatchValue == "No_Match"){
 	
-				if(DiffJob > DiffIF & DiffJob > DiffDCI){
+				if(DiffJob < DiffIF & DiffJob < DiffDCI){
 					FinalPTPredict$PT[i] <- PT_jobber
 					FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffIF > DiffJob & DiffIF > DiffDCI){
+				} else if(DiffIF < DiffJob & DiffIF < DiffDCI){
 					FinalPTPredict$PT[i] <- PT__IF
 					FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffDCI > DiffJob & DiffDCI> DiffIF ){
+				} else if(DiffDCI < DiffJob & DiffDCI < DiffIF ){
 					FinalPTPredict$PT[i] <- PT_DCI
 					FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 				} else{}
@@ -719,7 +723,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalPTPredict$PTConfidence[i] <- mean(c(DiffIF, DiffDCI))
 		
 		} else if(MatchValue == "Jobber_DCI_Present"){
-			if(DiffJob>DiffDCI){
+			if(DiffJob<DiffDCI){
 				FinalPTPredict$PT[i] <- PT_jobber
 				FinalPTPredict$PTConfidence[i] <- DiffJob
 			} else{
@@ -728,7 +732,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "Jobber_IF_Present"){
-			if(DiffJob>DiffIF){
+			if(DiffJob<DiffIF){
 				FinalPTPredict$PT[i] <- PT_jobber
 				FinalPTPredict$PTConfidence[i] <- DiffJob
 			} else{
@@ -737,7 +741,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "DCI_IF_Present"){
-			if(DiffDCI>DiffIF){
+			if(DiffDCI<DiffIF){
 				FinalPTPredict$PT[i] <- PT_DCI
 				FinalPTPredict$PTConfidence[i] <- DiffDCI
 			} else{
@@ -766,13 +770,13 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 		} else if(MatchValue == "No_Match"){
 	
-				if(DiffJob > DiffIF & DiffJob > DiffDCI){
+				if(DiffJob < DiffIF & DiffJob < DiffDCI){
 					FinalSEPredict$SE[i] <- SE_jobber
 					FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffIF > DiffJob & DiffIF > DiffDCI){
+				} else if(DiffIF < DiffJob & DiffIF < DiffDCI){
 					FinalSEPredict$SE[i] <- SE_IF
 					FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffDCI > DiffJob & DiffDCI> ConIF ){
+				} else if(DiffDCI < DiffJob & DiffDCI < DiffIF ){
 					FinalSEPredict$SE[i] <- SE_DCI
 					FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 				} else{}
@@ -802,7 +806,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalSEPredict$SEConfidence[i] <- mean(c(DiffIF, DiffDCI))
 		
 		} else if(MatchValue == "Jobber_DCI_Present"){
-			if(DiffJob>DiffDCI){
+			if(DiffJob<DiffDCI){
 				FinalSEPredict$SE[i] <- SE_jobber
 				FinalSEPredict$SEConfidence[i] <- DiffJob
 			} else{
@@ -811,7 +815,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "Jobber_IF_Present"){
-			if(DiffJob>DiffIF){
+			if(DiffJob<DiffIF){
 				FinalSEPredict$SE[i] <- SE_jobber
 				FinalSEPredict$SEConfidence[i] <- DiffJob
 			} else{
@@ -820,7 +824,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "DCI_IF_Present"){
-			if(DiffDCI>DiffIF){
+			if(DiffDCI<DiffIF){
 				FinalSEPredict$SE[i] <- SE_DCI
 				FinalSEPredict$SEConfidence[i] <- DiffDCI
 			} else{
@@ -832,7 +836,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 	}
 
 #Jobber + DCI
-} else if(length(string_IF) == 1 & length(string_DCI) == 2){
+} else if(length(string_IF) == 1 & length(string_DCI) == 2 & length(string_jobber) == 2){
 
 	#Make Prediction df via merging
 	PredictPT_jobber = merge(MS_PTlabel, string_jobber, by = "Numb_Sku", all = TRUE)
@@ -902,13 +906,13 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 		} else if(MatchValue == "No_Match"){
 	
-				if(DiffJob > DiffIF & DiffJob > DiffDCI){
+				if(DiffJob < DiffIF & DiffJob < DiffDCI){
 					FinalPTPredict$PT[i] <- PT_jobber
 					FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffIF > DiffJob & DiffIF > DiffDCI){
+				} else if(DiffIF < DiffJob & DiffIF < DiffDCI){
 					FinalPTPredict$PT[i] <- PT__IF
 					FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffDCI > DiffJob & DiffDCI> DiffIF ){
+				} else if(DiffDCI < DiffJob & DiffDCI < DiffIF ){
 					FinalPTPredict$PT[i] <- PT_DCI
 					FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 				} else{}
@@ -947,7 +951,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "Jobber_IF_Present"){
-			if(DiffJob>DiffIF){
+			if(DiffJob<DiffIF){
 				FinalPTPredict$PT[i] <- PT_jobber
 				FinalPTPredict$PTConfidence[i] <- DiffJob
 			} else{
@@ -956,7 +960,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "DCI_IF_Present"){
-			if(DiffDCI>DiffIF){
+			if(DiffDCI<DiffIF){
 				FinalPTPredict$PT[i] <- PT_DCI
 				FinalPTPredict$PTConfidence[i] <- DiffDCI
 			} else{
@@ -985,13 +989,13 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 		} else if(MatchValue == "No_Match"){
 	
-				if(DiffJob > DiffIF & DiffJob > DiffDCI){
+				if(DiffJob < DiffIF & DiffJob < DiffDCI){
 					FinalSEPredict$SE[i] <- SE_jobber
 					FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffIF > DiffJob & DiffIF > DiffDCI){
+				} else if(DiffIF < DiffJob & DiffIF < DiffDCI){
 					FinalSEPredict$SE[i] <- SE_IF
 					FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffDCI > DiffJob & DiffDCI> ConIF ){
+				} else if(DiffDCI < DiffJob & DiffDCI < ConIF ){
 					FinalSEPredict$SE[i] <- SE_DCI
 					FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 				} else{}
@@ -1021,7 +1025,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalSEPredict$SEConfidence[i] <- mean(c(DiffIF, DiffDCI))
 		
 		} else if(MatchValue == "Jobber_DCI_Present"){
-			if(DiffJob>DiffDCI){
+			if(DiffJob<DiffDCI){
 				FinalSEPredict$SE[i] <- SE_jobber
 				FinalSEPredict$SEConfidence[i] <- DiffJob
 			} else{
@@ -1030,7 +1034,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "Jobber_IF_Present"){
-			if(DiffJob>DiffIF){
+			if(DiffJob<DiffIF){
 				FinalSEPredict$SE[i] <- SE_jobber
 				FinalSEPredict$SEConfidence[i] <- DiffJob
 			} else{
@@ -1039,7 +1043,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "DCI_IF_Present"){
-			if(DiffDCI>DiffIF){
+			if(DiffDCI<DiffIF){
 				FinalSEPredict$SE[i] <- SE_DCI
 				FinalSEPredict$SEConfidence[i] <- DiffDCI
 			} else{
@@ -1052,7 +1056,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 
 
 #Jobber + IF
-} else if(length(string_IF) == 2 & length(string_DCI) == 1){
+} else if(length(string_IF) == 2 & length(string_DCI) == 1 & length(string_jobber) == 2){
 
 	#Make Prediction df via merging
 	PredictPT_jobber = merge(MS_PTlabel, string_jobber, by = "Numb_Sku", all = TRUE)
@@ -1122,13 +1126,13 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 		} else if(MatchValue == "No_Match"){
 	
-				if(DiffJob > DiffIF & DiffJob > DiffDCI){
+				if(DiffJob < DiffIF & DiffJob < DiffDCI){
 					FinalPTPredict$PT[i] <- PT_jobber
 					FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffIF > DiffJob & DiffIF > DiffDCI){
+				} else if(DiffIF < DiffJob & DiffIF < DiffDCI){
 					FinalPTPredict$PT[i] <- PT__IF
 					FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffDCI > DiffJob & DiffDCI> DiffIF ){
+				} else if(DiffDCI < DiffJob & DiffDCI < DiffIF ){
 					FinalPTPredict$PT[i] <- PT_DCI
 					FinalPTPredict$PTConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 				} else{}
@@ -1158,7 +1162,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalPTPredict$PTConfidence[i] <- mean(c(DiffIF, DiffDCI))
 		
 		} else if(MatchValue == "Jobber_DCI_Present"){
-			if(DiffJob>DiffDCI){
+			if(DiffJob<DiffDCI){
 				FinalPTPredict$PT[i] <- PT_jobber
 				FinalPTPredict$PTConfidence[i] <- DiffJob
 			} else{
@@ -1167,7 +1171,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "Jobber_IF_Present"){
-			if(DiffJob>DiffIF){
+			if(DiffJob<DiffIF){
 				FinalPTPredict$PT[i] <- PT_jobber
 				FinalPTPredict$PTConfidence[i] <- DiffJob
 			} else{
@@ -1176,7 +1180,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "DCI_IF_Present"){
-			if(DiffDCI>DiffIF){
+			if(DiffDCI<DiffIF){
 				FinalPTPredict$PT[i] <- PT_DCI
 				FinalPTPredict$PTConfidence[i] <- DiffDCI
 			} else{
@@ -1205,13 +1209,13 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 		} else if(MatchValue == "No_Match"){
 	
-				if(DiffJob > DiffIF & DiffJob > DiffDCI){
+				if(DiffJob < DiffIF & DiffJob < DiffDCI){
 					FinalSEPredict$SE[i] <- SE_jobber
 					FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffIF > DiffJob & DiffIF > DiffDCI){
+				} else if(DiffIF < DiffJob & DiffIF < DiffDCI){
 					FinalSEPredict$SE[i] <- SE_IF
 					FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
-				} else if(DiffDCI > DiffJob & DiffDCI> ConIF ){
+				} else if(DiffDCI < DiffJob & DiffDCI < ConIF ){
 					FinalSEPredict$SE[i] <- SE_DCI
 					FinalSEPredict$SEConfidence[i] <- mean(c(DiffJob, DiffIF, DiffDCI))
 				} else{}
@@ -1241,7 +1245,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			FinalSEPredict$SEConfidence[i] <- mean(c(DiffIF, DiffDCI))
 		
 		} else if(MatchValue == "Jobber_DCI_Present"){
-			if(DiffJob>DiffDCI){
+			if(DiffJob<DiffDCI){
 				FinalSEPredict$SE[i] <- SE_jobber
 				FinalSEPredict$SEConfidence[i] <- DiffJob
 			} else{
@@ -1250,7 +1254,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "Jobber_IF_Present"){
-			if(DiffJob>DiffIF){
+			if(DiffJob<DiffIF){
 				FinalSEPredict$SE[i] <- SE_jobber
 				FinalSEPredict$SEConfidence[i] <- DiffJob
 			} else{
@@ -1259,7 +1263,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 			}
 		
 		} else if(MatchValue == "DCI_IF_Present"){
-			if(DiffDCI>DiffIF){
+			if(DiffDCI<DiffIF){
 				FinalSEPredict$SE[i] <- SE_DCI
 				FinalSEPredict$SEConfidence[i] <- DiffDCI
 			} else{
@@ -1271,7 +1275,7 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 	}
 
 #Jobber
-} else {
+} else if(length(string_IF) == 1 & length(string_DCI) == 1 & length(string_jobber) == 2){
 
 	#Make Prediction df via merging
 	PredictPT_jobber = merge(MS_PTlabel, string_jobber, by = "Numb_Sku", all = TRUE)
@@ -1295,29 +1299,82 @@ if(length(string_IF) == 2 & length(string_DCI) == 2){
 	FinalPTPredict = PrePTResult_jobber
 	FinalSEPredict = PreSEResult_jobber
 
+#IF
+} else if(length(string_IF) == 2 & length(string_DCI) == 1 & length(string_jobber) == 1){
+
+	#Make Prediction df via merging
+	PredictPT_IF = merge(MS_PTlabel, string_IF, by = "Numb_Sku", all = TRUE)
+	PredictSE_IF = merge(MS_Serieslabel, string_IF, by = "Numb_Sku", all = TRUE)
+
+	#Make Prediction from prediction df
+	message("\n##### IF + Part-Type #####")
+	PrePTResult_jobber = NBPredict(PredictionDF = PredictPT_jobber, source = "IF", TestSkus = REF.NewSkuList)
+	message("\n##### IF + Series #####")
+	PreSEResult_jobber = NBPredict(PredictionDF = PredictSE_jobber, source = "IF", TestSkus = REF.NewSkuList)
+
+	#Subset result df
+	PrePTResult_IF = subset(PrePTResult_IF, select=c("Numb_Sku", "PredictedLabel_IF", "Difference_IF"))
+	PreSEResult_IF = subset(PreSEResult_IF, select=c("Numb_Sku", "PredictedLabel_IF", "Difference_IF"))
+
+	#Rename FinalPT/SEPredict df
+	names(PrePTResult_IF) = c("Numb_Sku", "PT", "PTConfidence")
+	names(PreSEResult_IF) = c("Numb_Sku", "SE", "SEConfidence")
+
+	#Merge to aquire FinalPTPredict df
+	FinalPTPredict = PrePTResult_IF
+	FinalSEPredict = PreSEResult_IF
+
+#DCI
+}  else if (length(string_IF) == 1 & length(string_DCI) == 2 & length(string_jobber) == 1){
+
+	#Make Prediction df via merging
+	PredictPT_DCI= merge(MS_PTlabel, string_DCI, by = "Numb_Sku", all = TRUE)
+	PredictSE_DCI= merge(MS_Serieslabel, string_DCI, by = "Numb_Sku", all = TRUE)
+
+	#Make Prediction from prediction df
+	message("\n##### DCI + Part-Type #####")
+	PrePTResult_DCI= NBPredict(PredictionDF = PredictPT_DCI, source = "DCI", TestSkus = REF.NewSkuList)
+	message("\n##### DCI + Series #####")
+	PreSEResult_DCI= NBPredict(PredictionDF = PredictSE_DCI, source = "DCI", TestSkus = REF.NewSkuList)
+
+	#Subset result df
+	PrePTResult_DCI= subset(PrePTResult_DCI, select=c("Numb_Sku", "PredictedLabel_DCI", "Difference_DCI"))
+	PreSEResult_DCI= subset(PreSEResult_DCI, select=c("Numb_Sku", "PredictedLabel_DCI", "Difference_DCI"))
+
+	#Rename FinalPT/SEPredict df
+	names(PrePTResult_DCI) = c("Numb_Sku", "PT", "PTConfidence")
+	names(PreSEResult_DCI) = c("Numb_Sku", "SE", "SEConfidence")
+
+	#Merge to aquire FinalPTPredict df
+	FinalPTPredict = PrePTResult_DCI
+	FinalSEPredict = PreSEResult_DCI
 }
 
 ###Merge Prediction data with Update Analysis
-confidence = 0.9
+Highconfidence = 1 - 0.9 #Because We are using negative numbers
+Lowconfidence = 1- 0.70 #Because We are using negative numbers
 
 PTPredictCalc = subset(FinalPTPredict, select = c("Numb_Sku", "PT", "PTConfidence"))
-PTConfi = quantile(as.numeric(PTPredictCalc$PTConfidence), confidence )[[1]][1]
-PTPredictCalc$easyConfi[as.numeric(PTPredictCalc$PTConfidence)>PTConfi] = "High"
-PTPredictCalc$easyConfi[as.numeric(PTPredictCalc$PTConfidence)<=PTConfi & as.numeric(PTPredictCalc$PTConfidence)>0] = "Medium"
-PTPredictCalc$easyConfi[as.numeric(PTPredictCalc$PTConfidence)<=0] = "Low"
+PTConfiHigh = quantile(as.numeric(PTPredictCalc$PTConfidence), Highconfidence)[[1]][1]
+PTConfiLow = quantile(as.numeric(PTPredictCalc$PTConfidence), Lowconfidence )[[1]][1]
+PTPredictCalc$easyConfi[as.numeric(PTPredictCalc$PTConfidence)<=PTConfiHigh ] = "High"
+PTPredictCalc$easyConfi[as.numeric(PTPredictCalc$PTConfidence)> PTConfiHigh& as.numeric(PTPredictCalc$PTConfidence)<PTConfiLow ] = "Medium"
+PTPredictCalc$easyConfi[as.numeric(PTPredictCalc$PTConfidence)>=PTConfiLow ] = "Low"
 FinalPTPredict_Done = subset(PTPredictCalc, select = c("Numb_Sku", "PT", "easyConfi"))
 names(FinalPTPredict_Done) = c("Numb_Sku", "part_type_filter", "PTConfidence")
 
+
 SEPredictCalc = subset(FinalSEPredict, select = c("Numb_Sku", "SE", "SEConfidence"))
-SEConfi = quantile(as.numeric(SEPredictCalc$SEConfidence), confidence )[[1]][1]
-SEPredictCalc$easyConfi[as.numeric(SEPredictCalc$SEConfidence)>PTConfi] = "High"
-SEPredictCalc$easyConfi[as.numeric(SEPredictCalc$SEConfidence)<=PTConfi & as.numeric(SEPredictCalc$SEConfidence)>0] = "Medium"
-SEPredictCalc$easyConfi[as.numeric(SEPredictCalc$SEConfidence)<=0] = "Low"
+SEConfiHigh = quantile(as.numeric(SEPredictCalc$SEConfidence), Highconfidence )[[1]][1]
+SEConfiLow = quantile(as.numeric(SEPredictCalc$SEConfidence), Lowconfidence )[[1]][1]
+SEPredictCalc$easyConfi[as.numeric(SEPredictCalc$SEConfidence)<=SEConfiHigh ] = "High"
+SEPredictCalc$easyConfi[as.numeric(SEPredictCalc$SEConfidence)>SEConfiHigh & as.numeric(SEPredictCalc$SEConfidence)<SEConfiLow] = "Medium"
+SEPredictCalc$easyConfi[as.numeric(SEPredictCalc$SEConfidence)>=SEConfiLow] = "Low"
 FinalSEPredict_Done = subset(SEPredictCalc, select = c("Numb_Sku", "SE", "easyConfi"))
 names(FinalSEPredict_Done) = c("Numb_Sku", "series_parent", "SEConfidence")
 
-PredictedPT = merge(Update.PostPA.Merge, FinalPTPredict_Done, by = "Numb_Sku", all = TRUE)###UPDATE
-PredictedSE = merge(PredictedPT, FinalSEPredict_Done, by = "Numb_Sku", all = TRUE)###UPDATE
+PredictedPT = merge(Update.PostPA.Merge, FinalPTPredict_Done, by = "Numb_Sku")
+PredictedSE = merge(PredictedPT, FinalSEPredict_Done, by = "Numb_Sku")
 
 CompletePrediction = PredictedSE
 
@@ -1327,6 +1384,7 @@ CompletePrediction = PredictedSE
 	CompletePrediction$PTConfidence = ""
 	CompletePrediction$series_parent = ""
 	CompletePrediction$SEConfidence = ""} ###UPDATE
+
 
 ###############################################
 ###############################################
@@ -1340,9 +1398,9 @@ FinalUpdateFile = subset(CompletePrediction, RevisedSku =="Revised")
 #File Restructure
 JobberDescription <- subset(FinalUpdateFile , select = -c(
 
-sku, price, TotalQty, CaseQty, Weight, Height, Length, Width, product_name, upc,
+sku, price, TotalQty, CaseQty, Weight, Height, Length, Width, product_name, upc, 
 
-expldescr, fnstring, merchname, dciptdescr, part_type_filter, PTConfidence, series_parent, SEConfidence,#Category_Location,
+expldescr, fnstring, merchname, dciptdescr, part_type_filter, PTConfidence, series_parent,SEConfidence,#Category_Location,
 
 Numb_Sku, Internal_Sku, STATUS, RevisedSku, attribute_set,
 
@@ -1377,7 +1435,6 @@ dciptdescr, merchname,  expldescr, product_name
 #fnstring
 #Make the final Update File
 CompleteUpdate <- cbind(AllSkuInformation, JobberDescription)
-
 
 ###########################################################
 ###########################################################
@@ -1513,8 +1570,8 @@ message("")
 message("***If you have any issues with the output***")
 message("   ***Please Contact Abul Hassan Sheikh***  ")
 message("")
-message("Version: 3.0")
-message("Last Updated: January 28st 2019")
+message("Version: 3.1")
+message("Last Updated: Feb 26st 2019")
 message("Author: Abul Hassan Sheikh")
 
 }
