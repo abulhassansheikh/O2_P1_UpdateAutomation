@@ -125,61 +125,78 @@ message("TEMP Folders Created")
 ###########################################################
 ###########################################################
 ###########################################################
-#Extract Formatted Jobber as UpdateFile
+###Extract Formatted Jobber as UpdateFile
 message("--------------------------*Formatted Jobber*")
-
 
 #Load Formated Jobber as UpdateFile
 BrandFile = paste(as.character(BrandName), "csv", sep = ".", collapse = NULL)
 File_Location = paste("//192.168.2.32/Group/Data Team/Brand_Update_Location/1_Input_Folder", as.character(BrandFile), sep = "/", collapse = NULL)
 UpdateFile=read.csv(File_Location, header = TRUE, row.names=NULL)
 
-
 #Pull out Numb_Sku
 UpdateFile$Numb_Sku<-as.character(UpdateFile$sku)
 UpdateFileSku <- UpdateFile$Numb_Sku
 
-
 message("Number of Skus on Jobber:", length(UpdateFileSku))
+
+
+###Jobber Processing
+#Remove number columns from jobber
+numCols = c("usa_jobber_price", "ca_jobber_price", "Jobber_UPC", "Jobber_Weight", "Jobber_Length", "Jobber_Width", "Jobber_Height", "Numb_Sku")
+jobber = UpdateFile[ , !(names(UpdateFile) %in% numCols )]
+
+#Remove other # columns
+for(i in 2:ncol(jobber)){	if(class(jobber[,i])== "integer"){numCols = c(numCols, names(jobber)[i])}	}
+jobber = jobber[,!(names(jobber) %in% numCols )]
+
+#Combin all text columns
+for(i in 2:ncol(jobber)){jobber$string = paste(jobber$string,  trimws(jobber[,i]), sep=" ", collapse=NULL)}#jobber$sku,
+string_jobber = subset(jobber, select=c(sku, string))
+
 
 message("Formatted Jobber Loaded")
 
 
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-#Extract the Main sheet
-message("--------------------------*main_sheet*")
 
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###Extract the Main sheet
+message("--------------------------*main_sheet*")
 
 #Create Mainsheet location path
 BrandFolderLocation = paste("//192.168.2.32/GoogleDrive/Completed Magento Uploads (v 1.0)/",as.character(BrandName), sep = "", collapse = NULL)
 message("Path of Mainsheet: ", BrandFolderLocation )
 
-
 #Go to the BrandFolderLocation  location
 setwd(BrandFolderLocation)
-
 
 #Identify the Main--sheet and pull it
 PulledMain=read.csv(Sys.glob("main--*.csv"), header = TRUE)
 
-
 #Pull out skus
 PulledMain$sku <- as.character(PulledMain$sku)
-MainSku<-PulledMain$sku
+MainSku<-data.frame(PulledMain$sku)
+names(MainSku) = "MainSku"
 
-	
 message("Total Skus on MainSheet:", length(MainSku))
-
 
 #Pull out any non-discontinued skus
 UnDeletedSKU <- subset(PulledMain, delete=="N" & PulledMain$type=="simple", select=(sku))
 UnDeletedSKU <- as.character(UnDeletedSKU$sku)
 
-
 message("Number of ACTIVE Skus on MainSheet:", length(UnDeletedSKU))
+
+
+###Mainsheet Processing
+#Pull out any non-discontinued skus for Part type
+MS_PTlabel <- subset(PulledMain, PulledMain$type=="simple" & PulledMain$part_type_filter!="" & PulledMain$delete == "N", select=c(sku, part_type_filter))
+names(MS_PTlabel) = c("sku", "label")
+
+#Pull out any non-discontinued skus for Series
+MS_Serieslabel <- subset(PulledMain, PulledMain$type=="simple" & PulledMain$part_type_filter!="" & PulledMain$delete == "N", select=c(sku, series_parent))
+names(MS_Serieslabel) = c("sku", "label")
 
 
 message("MainSheet Created")
@@ -302,7 +319,7 @@ PooledPartsApp = data.frame()
 
 #Find the latest file within the specific DCI folder
 ##Change the directory to temp folder incase any files are outputted
-setwd("//192.168.2.32/Group/Data Team/Abul/5. Temp Folder")
+setwd("//192.168.2.32/Group/Data Team/Brand_Update_Location/13. FILE_DUMP")
 	
 ##Create DCI Folder Path
 DCIPath = paste("//192.168.2.32/GoogleDrive/FTP_Downloads/DCI_Files/",as.character(DCIFolderList), sep = "", collapse = NULL)
@@ -359,7 +376,7 @@ PooledDigitalAsset = data.frame()
 
 #Find, upzip and rbind to PooledDigitalAsset 
 ##Change the directory to temp folder incase any files are outputted
-setwd("//192.168.2.32/Group/Data Team/Abul/5. Temp Folder")
+setwd("//192.168.2.32/Group/Data Team/Brand_Update_Location/13. FILE_DUMP")
 
 ##Find the Digital Asset file
 DigitalAssetFile = paste(strsplit(LatestDCIFile , split='.zip', fixed=TRUE), "_DigitalAsset.txt", sep = "",collapse = NULL)
@@ -600,14 +617,14 @@ library("openxlsx")
 ##Create the workbook for excel and add the following tabs: " Requirements", "Internal_Audit", " Audit"
 CompiledSheet <- createWorkbook()
 
-addWorksheet(CompiledSheet , " Requirements")
-writeData(CompiledSheet , sheet = " Requirements", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/ Requirements_Instructions.csv", header = TRUE, row.names=NULL))
+addWorksheet(CompiledSheet , "New_Audit")
+writeData(CompiledSheet , sheet = "New_Audit", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/New_Audit.csv", header = TRUE, row.names=NULL))
 
 addWorksheet(CompiledSheet , "Internal_Audit")
 writeData(CompiledSheet , sheet = "Internal_Audit", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/Internal_Audit.csv", header = TRUE, row.names=NULL))
 
-addWorksheet(CompiledSheet , " Audit")
-writeData(CompiledSheet , sheet = " Audit", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/ Audit.csv", header = TRUE, row.names=NULL))
+addWorksheet(CompiledSheet , "NS--BRANDNAME.csv")
+writeData(CompiledSheet , sheet = "NS--BRANDNAME.csv", x = read.csv("//192.168.2.32/Group/Data Team/Brand_Update_Location/5_R_Brand_Reference_Files/Consol_Ref_Sheet.csv", header = TRUE, row.names=NULL))
 
 #Attach PulledMain to Compiled Sheet
 addWorksheet(CompiledSheet , "Old_Main")
@@ -721,8 +738,8 @@ message("")
 message("***If you have any issues with the output***")
 message("   ***Please Contact Abul Hassan Sheikh***  ")
 message("")
-message("Version: 2.1")
-message("Last Updated: Auguest 27th 2018")
+message("Version: 2.2")
+message("Last Updated: December 1st 2018")
 message("Author: Abul Hassan Sheikh")
 
 }
@@ -731,63 +748,6 @@ message("Author: Abul Hassan Sheikh")
 ############################################################
 ############################################################
 ############################################################
-############################################################
-#' A Inventory File Loading Function
-#'
-#' This function allows you to Create the InvantoryFile Dataframe using the function: "LoadLatestInventoryFile()"
-#' @param Defaults to TRUE.
-#' @keywords Invantory File
-#' @export
-#' @examples
-#' GetLatestInventoryFile ()
-###########################################################
-GetLatestInventoryFile <- function(){
-
-
-message("--------------------------*Loading Latest Inventory File*")
-
-
-#Identify The latest Invantory file based on file name
-LatestIFFile = sort(list.files("//192.168.2.32/GoogleDrive/FTP_Downloads/Inventory_File" , pattern = "*.ZIP"),decreasing = TRUE)[1]
-message("Identifying Latest Invantory File")
-
-
-#Paste Location after identifying latest Invantory File
-IFLocation = paste("//192.168.2.32/GoogleDrive/FTP_Downloads/Inventory_File",as.character(LatestIFFile) , sep = "/", collapse = NULL)
-
-
-#Identify Exact Invantory File from Ziped folder as IFFile 
-IFFile = grep('\\.csv$', unzip(IFLocation , list=TRUE)$Name, ignore.case=TRUE, value=TRUE)
-message("Latest Invantory File is: ", IFFile)
-
-
-#pull Unziped Invantory File and place into InvantoryFile df
-message("Loading Invantory File, this may take some time...")
-InvantoryFile = read.csv(unzip(IFLocation ,IFFile ), header = TRUE, row.names=NULL)
-
-
-#Remove the "=" from infront of skus
-InvantoryFile$mpn= substring(InvantoryFile$mpn, 2)
-
-
-#Place a "#" infront of sku and turn into a character. 
-InvantoryFile$Numb_Sku = paste("#",as.character(InvantoryFile$mpn), sep = "", collapse = NULL)
-
-message("--------------------------*Inventory File Extraction Complete*")
-message("Latest InvantoryFile ready to use!")
-message("")
-message("***If you have any issues with the output***")
-message("   ***Please Contact Abul Hassan Sheikh***  ")
-message("")
-message("Version: 1.0")
-message("Last Updated: Auguest 27th 2018")
-message("Author: Abul Hassan Sheikh")
-
-#Return the following data sets
-return(InvantoryFile)
-
-
-}
 
 ###########################################################
 ############################################################
@@ -796,19 +756,19 @@ return(InvantoryFile)
 #TROUBLESHOOT
 #PulledMain = data.frame()
 #UpdateFile = data.frame()
-PulledIF = data.frame()
-PooledPartsApp = data.frame()
-PooledDigitalAsset = data.frame()
-CompleteUpdate = data.frame()
+#PulledIF = data.frame()
+#PooledPartsApp = data.frame()
+#PooledDigitalAsset = data.frame()
+#CompleteUpdate = data.frame()
 
-InvantoryFile = data.frame(GetLatestInventoryFile())[1]
-head(InvantoryFile ) 
+#InvantoryFile = data.frame(GetLatestInventoryFile())[1]
+#head(InvantoryFile ) 
 
-Update.Brand(BrandName = "MSD", ImageDecision = "0", Final1_Test0 = "0" )
+#Update.Brand(BrandName = "MSD", ImageDecision = "0", Final1_Test0 = "0" )
 
 #Clear Workspace
-rm(list = ls())
-traceback()
+#rm(list = ls())
+#traceback()
 
 ###########################################################
 
@@ -816,4 +776,8 @@ traceback()
 ###########################################################
 #Additional Additions
 
- ImageDecision = "0"
+ #ImageDecision = "0"
+
+
+
+
